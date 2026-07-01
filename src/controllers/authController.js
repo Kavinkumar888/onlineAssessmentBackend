@@ -8,7 +8,7 @@ const registerAdmin = async (req, res) => {
     const existing = await User.findOne({ email: 'admin@exam.com' });
     if (existing) return res.status(200).json({ message: 'Admin already exists' });
 
-    const passwordHash = await bcrypt.hash('Admin@123', 10);
+    const passwordHash = await bcrypt.hash('eatek@123', 10);
     const admin = await User.create({
       name: 'System Admin',
       registerNumber: 'ADMIN001',
