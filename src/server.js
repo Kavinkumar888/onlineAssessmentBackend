@@ -23,7 +23,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:5174",
+      "https://online-assessmentfrontend.vercel.app",
     ],
     credentials: true,
   })
