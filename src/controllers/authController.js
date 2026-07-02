@@ -5,14 +5,14 @@ const ActivityLog = require('../models/ActivityLog');
 
 const registerAdmin = async (req, res) => {
   try {
-    const existing = await User.findOne({ email: 'admin@exam.com' });
+    const existing = await User.findOne({ email: 'admin@gmail.com' });
     if (existing) return res.status(200).json({ message: 'Admin already exists' });
 
     const passwordHash = await bcrypt.hash('eatek@123', 10);
     const admin = await User.create({
       name: 'System Admin',
       registerNumber: 'ADMIN001',
-      email: 'admin@exam.com',
+      email: 'admin@gmail.com',
       password: passwordHash,
       role: 'admin',
       status: 'active'
