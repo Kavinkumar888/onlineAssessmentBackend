@@ -307,12 +307,11 @@ const closeExam = async (req, res) => {
 
 const submitExam = async (req, res) => {
   try {
-
-    const payload = req.body;
+    const { exam, answers, timeTaken } = req.body;
 
     const alreadySubmitted = await Result.findOne({
       student: req.user._id || req.user.id,
-      exam: payload.exam,
+      exam,
     });
 
     if (alreadySubmitted) {
@@ -322,16 +321,79 @@ const submitExam = async (req, res) => {
       });
     }
 
+    const examData = await Exam.findById(exam);
+
+    if (!examData) {
+      return res.status(404).json({
+        success: false,
+        message: "Exam not found",
+      });
+    }
+
+    const questions = await Question.find({
+      examId: exam,
+    });
+
+    let marks = 0;
+    let correctAnswers = 0;
+    let wrongAnswers = 0;
+    let skippedQuestions = 0;
+
+    for (const q of questions) {
+
+      const userAnswer = answers.find(
+        (a) => String(a.question) === String(q._id)
+      );
+
+      if (!userAnswer) {
+        skippedQuestions++;
+        continue;
+      }
+
+      if (String(userAnswer.answer) === String(q.correctAnswer)) {
+        correctAnswers++;
+        marks += q.marks;
+      } else {
+        wrongAnswers++;
+        marks -= q.negativeMarks || 0;
+      }
+    }
+
+    if (marks < 0) {
+      marks = 0;
+    }
+
+    const totalMarks = questions.reduce(
+      (sum, q) => sum + q.marks,
+      0
+    );
+
+    const percentage =
+      totalMarks > 0
+        ? Number(((marks / totalMarks) * 100).toFixed(2))
+        : 0;
+            const status =
+      marks >= examData.passingMarks
+        ? "passed"
+        : "failed";
+
     const result = await Result.create({
-      ...payload,
       student: req.user._id || req.user.id,
-      status: "passed",
+      exam,
+      answers,
+      correctAnswers,
+      wrongAnswers,
+      skippedQuestions,
+      marks,
+      percentage,
+      timeTaken,
+      status,
     });
 
     await ActivityLog.create({
       user: req.user._id || req.user.id,
       action: "Submitted Exam",
-      details: payload.exam,
+      details: examData.examName,
     });
 
     return res.status(201).json({
